@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Registration</category>
+  <title>Image Registration CLI</title>
+  <description><![CDATA[Image registration for virtual bronchoscopy]]></description>
+  <version>0.0.1</version>
+  <documentation-url>http://www.slicer.org/slicerWiki/index.php/Documentation/4.3/Modules/ImageRegistration</documentation-url>
+  <license>Slicer</license>
+  <contributor>Pietro Nardelli (UCC)</contributor>
+  <acknowledgements>This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN</acknowledgements>
+  <parameters>
+    <label>Input Images For Registration</label>
+    <description><![CDATA[Input/output parameters]]></description>    
+    <image>
+      <name>fixedImage</name>
+      <label>Fixed Image</label>
+      <channel>input</channel>
+      <index>0</index>
+      <description><![CDATA[Fixed image for registration]]></description>
+    </image>
+    <image>
+      <name>movingImage</name>
+      <label>Moving Image</label>
+      <channel>input</channel>
+      <index>1</index>
+      <description><![CDATA[Moving image for registration]]></description>
+    </image>
+    <integer>
+    <name>registrationAngle</name>
+    <description><![CDATA[Display registration angle.]]></description>
+    <label>Registration Angle</label>
+	    <channel>output</channel>
+      <default>0</default>
+    </integer>
+  </parameters>
+  <parameters>
+    <label>Registration Parameters</label>
+    <description><![CDATA[registration parameters]]></description>    
+    <integer>
+      <name>anglesNumber</name>
+      <label>Number of Angles</label>
+      <longflag>--anglesNumber</longflag>
+      <description><![CDATA[Number of angles to be used for registration]]></description>
+      <default>36</default>
+      <constraints>
+        <minimum>1</minimum>
+        <maximum>360</maximum>
+      </constraints>
+    </integer>
+  </parameters>
+</executable>
