@@ -38,8 +38,8 @@ int main( int argc, char * argv[] )
   typedef itk::ImageFileReader<FixedInputImageType>  FixedReaderType;
   typedef itk::ImageFileReader<MovingInputImageType> MovingReaderType;
 
-  typename FixedReaderType::Pointer fixedReader   = FixedReaderType::New();
-  typename MovingReaderType::Pointer movingReader = MovingReaderType::New();
+   FixedReaderType::Pointer fixedReader   = FixedReaderType::New();
+   MovingReaderType::Pointer movingReader = MovingReaderType::New();
 
   fixedReader->SetFileName( fixedImage.c_str() );
   movingReader->SetFileName( movingImage.c_str() );
@@ -75,10 +75,10 @@ int main( int argc, char * argv[] )
   // Resample moving image to have the same size as the fixed image
 
   typedef itk::IdentityTransform<double, 2> IdentityTransformType;
-  typename IdentityTransformType::Pointer identityTransform = IdentityTransformType::New(); 
+   IdentityTransformType::Pointer identityTransform = IdentityTransformType::New(); 
 
   typedef itk::ResampleImageFilter< MovingInputImageType, MovingInputImageType > ResampleFilterType;
-  typename ResampleFilterType::Pointer resampler = ResampleFilterType::New();
+   ResampleFilterType::Pointer resampler = ResampleFilterType::New();
  
   resampler->SetInput( movingNormalizer->GetOutput() );
   identityTransform->SetIdentity();
@@ -119,12 +119,12 @@ int main( int argc, char * argv[] )
   typedef itk::MultiResolutionPyramidImageFilter< MovingInputImageType, MovingInputImageType >   	 MovingImagePyramidType;
 
 
-  typename TransformType::Pointer            transform    = TransformType::New();
-  typename MetricType::Pointer               metric       = MetricType::New();
-  typename OptimizerType::Pointer            optimizer    = OptimizerType::New();
-  typename InterpolatorType::Pointer         interpolator = InterpolatorType::New();
-  typename RegistrationType::Pointer         registration = RegistrationType::New();
-  typename TransformInitializerType::Pointer initializer  = TransformInitializerType::New();
+   TransformType::Pointer            transform    = TransformType::New();
+   MetricType::Pointer               metric       = MetricType::New();
+   OptimizerType::Pointer            optimizer    = OptimizerType::New();
+   InterpolatorType::Pointer         interpolator = InterpolatorType::New();
+   RegistrationType::Pointer         registration = RegistrationType::New();
+   TransformInitializerType::Pointer initializer  = TransformInitializerType::New();
 
   itk::TimeProbesCollectorBase timer;
   itk::TimeProbesCollectorBase singleTimer;
@@ -203,7 +203,7 @@ int main( int argc, char * argv[] )
   //  The value of the image metric corresponding to the best set of parameters
   //  can be obtained with the GetMinimumMetricValuePosition method of the optimizer.
 
-  typedef typename TransformType::ParametersType ParametersType;
+  typedef  TransformType::ParametersType ParametersType;
   ParametersType bestParameters = optimizer->GetMinimumMetricValuePosition();
   std::cout << "Final parameters: " << bestParameters << std::endl;
 

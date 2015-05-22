@@ -199,7 +199,7 @@ int main( int argc, char * argv[] )
   }
 
 
-  singleTimer.Stop("Registration")
+  singleTimer.Stop("Registration");
   //  The value of the image metric corresponding to the best set of parameters
   //  can be obtained with the GetMinimumMetricValuePosition method of the optimizer.
 
