@@ -60,6 +60,8 @@ int main( int argc, char * argv[] )
   FixedInputImageType::Pointer  fixImage = fixedReader->GetOutput();
   MovingInputImageType::Pointer movImage = movingReader->GetOutput();
 
+  itk::TimeProbesCollectorBase firstTimer;
+  firstTimer.Start("Image Resampling");
   // Normalize the images
   typedef itk::NormalizeImageFilter<FixedInputImageType, FixedInputImageType> NormalizeFilterType;
  
@@ -80,44 +82,70 @@ int main( int argc, char * argv[] )
   typedef itk::ResampleImageFilter< MovingInputImageType, MovingInputImageType > ResampleFilterType;
    ResampleFilterType::Pointer resampler = ResampleFilterType::New();
  
-  resampler->SetInput( movingNormalizer->GetOutput() );
   identityTransform->SetIdentity();
+
+  unsigned int fixedImageSize = fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[0] * fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
+  unsigned int movingImageSize = movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[0] * movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
 
   std::cout<<"Fixed image size: "<<fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()<<std::endl;
   std::cout<<"Moving image size: "<<movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()<<std::endl;
 
-  double oldWidth = movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[0];
-  double newWidth = fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[0];  
-
-  double oldHeight = movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
-  double newHeight = fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[1]; 
-
   double OutputSpacing[2];
-  OutputSpacing[0] = fixedNormalizer->GetOutput()->GetSpacing()[0] * (double) oldWidth / (double) newWidth;
-  OutputSpacing[1] = fixedNormalizer->GetOutput()->GetSpacing()[1] * (double) oldHeight / (double) newHeight;
 
-  resampler->SetTransform( identityTransform );
-  resampler->SetSize( fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize() );
-  resampler->SetOutputOrigin(  fixedNormalizer->GetOutput()->GetOrigin() );
-  resampler->SetOutputSpacing( OutputSpacing );
-  resampler->SetOutputDirection( fixImage->GetDirection() );
-  resampler->UpdateLargestPossibleRegion();
-  resampler->SetDefaultPixelValue(100);  
+  if(movingImageSize < fixedImageSize)
+  {
+	  double oldWidth = movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[0];
+	  double newWidth = fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[0];  
 
+	  double oldHeight = movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
+      double newHeight = fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[1]; 
+
+	  OutputSpacing[0] = fixedNormalizer->GetOutput()->GetSpacing()[0] * (double) oldWidth / (double) newWidth;
+	  OutputSpacing[1] = fixedNormalizer->GetOutput()->GetSpacing()[1] * (double) oldHeight / (double) newHeight;
+
+      resampler->SetInput( movingNormalizer->GetOutput() );
+	  resampler->SetTransform( identityTransform );
+	  resampler->SetSize( fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize() );
+	  resampler->SetOutputOrigin(  fixedNormalizer->GetOutput()->GetOrigin() );
+	  resampler->SetOutputSpacing( OutputSpacing );
+	  resampler->SetOutputDirection( fixImage->GetDirection() );
+	  resampler->UpdateLargestPossibleRegion();
+	  resampler->SetDefaultPixelValue(100);  
+  }
+  else
+  {
+	  double oldWidth  = fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[0];  
+	  double newWidth  = movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[0];
+    
+	  double oldHeight = fixedNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[1]; 
+	  double newHeight = movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize()[1];
+
+	  OutputSpacing[0] = movingNormalizer->GetOutput()->GetSpacing()[0] * (double) oldWidth / (double) newWidth;
+	  OutputSpacing[1] = movingNormalizer->GetOutput()->GetSpacing()[1] * (double) oldHeight / (double) newHeight;
+ 
+	  resampler->SetInput( fixedNormalizer->GetOutput() );
+	  resampler->SetTransform( identityTransform );
+	  resampler->SetSize( movingNormalizer->GetOutput()->GetLargestPossibleRegion().GetSize() );
+	  resampler->SetOutputOrigin(  movingNormalizer->GetOutput()->GetOrigin() );
+	  resampler->SetOutputSpacing( OutputSpacing );
+	  resampler->SetOutputDirection( movImage->GetDirection() );
+	  resampler->UpdateLargestPossibleRegion();
+	  resampler->SetDefaultPixelValue(100);  
+  }
+
+  resampler->Update();
+  firstTimer.Stop("Image Resampling");
   // Register the two images
 
-  typedef itk::Euler2DTransform<double>                                                       		 TransformType;
+  typedef itk::Euler2DTransform<double>                                                       	 TransformType;
   typedef itk::ExhaustiveOptimizer                                                   	 		 OptimizerType; 
-  //typedef itk::MeanSquaresImageToImageMetric< FixedInputImageType, MovingInputImageType >              	 MetricType;
   typedef itk::MattesMutualInformationImageToImageMetric< FixedInputImageType, MovingInputImageType >    MetricType;
   typedef itk::LinearInterpolateImageFunction< MovingInputImageType, double >	         		 InterpolatorType;
   typedef itk::CenteredTransformInitializer< TransformType, FixedInputImageType,  MovingInputImageType > TransformInitializerType;
-  //typedef itk::ImageRegistrationMethod< FixedInputImageType, MovingInputImageType >	 		 RegistrationType;
 
   typedef itk::MultiResolutionImageRegistrationMethod< FixedInputImageType, MovingInputImageType >	 RegistrationType;
   typedef itk::MultiResolutionPyramidImageFilter< FixedInputImageType, FixedInputImageType >   		 FixedImagePyramidType;
   typedef itk::MultiResolutionPyramidImageFilter< MovingInputImageType, MovingInputImageType >   	 MovingImagePyramidType;
-
 
    TransformType::Pointer            transform    = TransformType::New();
    MetricType::Pointer               metric       = MetricType::New();
@@ -154,8 +182,16 @@ int main( int argc, char * argv[] )
   //
   singleTimer.Start("Initializer");
   initializer->SetTransform(   transform );
-  initializer->SetFixedImage(  fixedNormalizer->GetOutput()  );
-  initializer->SetMovingImage( resampler->GetOutput() );
+  if(movingImageSize < fixedImageSize)
+  {
+	  initializer->SetFixedImage(  fixedNormalizer->GetOutput()  );
+	  initializer->SetMovingImage( resampler->GetOutput() );
+  }
+  else
+  {
+	  initializer->SetFixedImage(  resampler->GetOutput()  );
+	  initializer->SetMovingImage( movingNormalizer ->GetOutput() );
+  }
   initializer->GeometryOn();
   initializer->InitializeTransform();
   singleTimer.Stop("Initializer");
@@ -175,16 +211,26 @@ int main( int argc, char * argv[] )
   registration->SetMetric(      metric    );
   registration->SetOptimizer(   optimizer );
   registration->SetInterpolator(  interpolator  );
-  registration->SetFixedImage(  fixedNormalizer->GetOutput()  );
-  registration->SetFixedImageRegion( fixedNormalizer->GetOutput()->GetBufferedRegion() );
+  if(movingImageSize < fixedImageSize)
+  {
+	  registration->SetFixedImage(  fixedNormalizer->GetOutput()  );
+ 	  registration->SetFixedImageRegion( fixedNormalizer->GetOutput()->GetBufferedRegion() );
+	  registration->SetMovingImage( resampler->GetOutput()  );
+  }
+  else
+  {
+	  registration->SetFixedImage(  resampler->GetOutput()  );
+ 	  registration->SetFixedImageRegion( resampler->GetOutput()->GetBufferedRegion() );
+	  registration->SetMovingImage( movingNormalizer->GetOutput()  );
+  }
+
   registration->SetFixedImagePyramid(  fixedImagePyramid  );
-  registration->SetMovingImage( resampler->GetOutput()  );
   registration->SetMovingImagePyramid( movingImagePyramid  );
   registration->SetInitialTransformParameters( transform->GetParameters() );
   registration->SetTransform( transform );
-  registration->SetNumberOfLevels( 4 );
+  registration->SetNumberOfLevels(2);
 
-  //std::cout << "Initial Transform params  = " << registration->GetInitialTransformParameters() << std::endl;
+  std::cout << "resampler dim  = " << resampler->GetOutput()->GetLargestPossibleRegion().GetSize() << std::endl;
   //std::cout << "Initial Metric value  = " << metric->GetValue( registration->GetInitialTransformParameters() ) << std::endl;
 
   try
@@ -233,5 +279,6 @@ int main( int argc, char * argv[] )
   timer.Stop("Full Process");
   timer.Report( std::cout );
   singleTimer.Report( std::cout );
+  firstTimer.Report( std::cout );
   return EXIT_SUCCESS;
 }
